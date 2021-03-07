@@ -128,7 +128,7 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 a = ctx.saved_values
 
-                return grad_output * a
+                return sigmoid_map(grad_output) * sigmoid_map(a)  # .25 & .365529
 
         class ReLU(Function):
             @staticmethod
@@ -182,13 +182,7 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
             def backward(ctx, grad_output):
 
                 # TODO: Implement for Task 2.3.
-
-                # a = ctx.saved_values
-                # return grad_output * a
-
                 return exp_map(grad_output)
-
-
 
         class Sum(Function):
             @staticmethod
@@ -261,11 +255,13 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 # a, b = ctx.saved_values
                 # return b * grad_output, a * grad_output
+
                 # return grad_output, grad_output
 
-                return 0.0
+                return grad_output * 0.0, grad_output * 0.0
 
         class EQ(Function):
+            @staticmethod
             def forward(ctx, a, b):
 
                 # TODO: Implement for Task 2.2.
@@ -279,11 +275,7 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 # TODO: Implement for Task 2.3.
 
-                # a, b = ctx.saved_values
-                # return b * grad_output, a * grad_output
-                # return grad_output, grad_output
-
-                return 0.0
+                return grad_output * 0.0
 
         class Permute(Function):
             @staticmethod

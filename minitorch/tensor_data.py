@@ -2,6 +2,7 @@ import random
 from .operators import prod
 from numpy import array, float64, ndarray
 import numba
+import numpy as np
 
 MAX_DIMS = 32
 
@@ -25,17 +26,14 @@ def index_to_position(index, strides):
     """
 
     # TODO: Implement for Task 2.1.
-    print('#####******************** index', index, 'strides', strides)
-    print('#####******************** index', index, 'strides', strides)
+
     position_in_storage = 0
 
-    for i, ind in enumerate(index):
-        position_in_storage += strides[i] * ind
+    for i, val in enumerate(index):
 
-    print('index #####', index, 'strides', strides)
+        position_in_storage += strides[i] * val
 
     return position_in_storage
-
 
 
 def count(position, shape, out_index):
@@ -53,29 +51,21 @@ def count(position, shape, out_index):
     Returns:
       None : Fills in `out_index`.
 
-    """
+       """
 
     # TODO: Implement for Task 2.1.
 
-    indices_list = []
+    strides = strides_from_shape(shape)
 
-    def index_list(items, ls):
+    from itertools import combinations, product
 
-        for i in range(len(items[0])):
+    indices_list = [list(range(i)) for i in shape]
 
-            item = ls + [items[0][i]]
-
-            if len(items) == 1:
-                indices_list.append(item)
-            else:
-                index_list(items[1:], item)
-
-    List = [list(range(val)) for val in shape]
-
-    index_list(List, [])
-
-    for idx, val in enumerate(indices_list[position]):
-        out_index[idx] = val
+    for indices in combinations([*indices_list], len(shape)):
+        for index in product(*indices):
+            if position == index_to_position(index, strides):
+                for i, val in enumerate(index):
+                    out_index[i] = val
 
 
 def broadcast_index(big_index, big_shape, shape, out_index):
@@ -96,16 +86,18 @@ def broadcast_index(big_index, big_shape, shape, out_index):
         None : Fills in `out_index`.
     """
     # TODO: Implement for Task 2.4.
-    ###############################################################
-    #b = len(big_shape) - 1
-    b = len(big_shape) - len(shape)
-    for i in list(range(0, len(shape)))[::-1]:
-        if shape[i] != 1:
-            out_index[i] = big_index[b]
-        elif shape[i] == 1:
+
+    index_offset = len(big_shape) - len(shape)
+
+    for i in range(len(shape)):
+
+        if shape[i] > 1:
+
+            out_index[i] = big_index[i + index_offset]
+
+        else:
+
             out_index[i] = 0
-        b -= 1
-    ###############################################################
 
 
 def shape_broadcast(shape1, shape2):
@@ -135,6 +127,7 @@ def shape_broadcast(shape1, shape2):
             b = list([1] * (len(a) - len(b))) + b
 
         # print('shape1 == shape2', shape1, shape2, tuple([max(m, n) for m, n in zip(a[::1], b[::1])]))
+
         return tuple([max(m, n) for m, n in zip(a[::1], b[::1])])
     else:
         raise IndexError("Cannot Broadcast")
@@ -208,15 +201,12 @@ class TensorData:
             if ind < 0:
                 raise IndexingError(f"Negative indexing for {index} not supported.")
 
-        print('#array(index)#####', array(index), '###self._strides###', self._strides)
-
         # Call fast indexing.
         return index_to_position(array(index), self._strides)
 
     def indices(self):
         lshape = array(self.shape)
         out_index = array(self.shape)
-        print(out_index, '######################################################', array(self.shape))
         for i in range(self.size):
             count(i, lshape, out_index)
             yield tuple(out_index)
