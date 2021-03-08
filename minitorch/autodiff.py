@@ -145,6 +145,7 @@ class FunctionBase:
     def apply(cls, *vals):
         raw_vals = []
         need_grad = False
+
         for v in vals:
             if isinstance(v, Variable):
                 if v.history is not None:
@@ -152,8 +153,15 @@ class FunctionBase:
                 raw_vals.append(v.get_data())
             else:
                 raw_vals.append(v)
+
+        # print('*vals ###########', *vals, raw_vals)
+
         ctx = Context(not need_grad)
+
         c = cls.forward(ctx, *raw_vals)
+
+        # print('*vals ###########', *vals, raw_vals, c,  type(c), 'cls', type(cls), cls)
+
         assert isinstance(c, cls.data_type), "Expected return typ %s got %s" % (
             cls.data_type,
             type(c),

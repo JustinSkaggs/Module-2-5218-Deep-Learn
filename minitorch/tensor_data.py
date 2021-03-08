@@ -130,6 +130,7 @@ def shape_broadcast(shape1, shape2):
 
         return tuple([max(m, n) for m, n in zip(a[::1], b[::1])])
     else:
+
         raise IndexError("Cannot Broadcast")
 
 

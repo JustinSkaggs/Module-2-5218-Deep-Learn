@@ -34,19 +34,24 @@ def tensor_map(fn):
 
         # TODO: Implement for Task 2.2.
 
-        for i in range(len(out)):
+        if all(out_shape == in_shape):
 
-            # Use count(…) to go from i to index according to out_shape
-            index = [0] * len(out_shape)
-            count(i, out_shape, index)
+            for idx, val in enumerate(in_storage):
+                out[idx] = fn(val)
+        else:
 
-            # Broadcast tensor in_shape
-            in_index = [0] * len(in_shape)
-            broadcast_index(index, out_shape, in_shape, in_index)
+            for i in range(len(out)):
 
-            in_pos = index_to_position(in_index, in_strides)
+                index = [0] * len(out_shape)
+                count(i, out_shape, index)
 
-            out[i] = fn(in_storage[in_pos])
+                # Broadcast tensor in_shape
+                in_index = [0] * len(in_shape)
+                broadcast_index(index, out_shape, in_shape, in_index)
+
+                in_pos = index_to_position(in_index, in_strides)
+
+                out[i] = fn(in_storage[in_pos])
 
     return _map
 
@@ -217,6 +222,23 @@ def tensor_reduce(fn):
             in_pos = index_to_position(in_index, in_strides)
 
             out[i] = fn(in_storage[in_pos])
+
+
+                def my_reduce(ls):
+
+        ls = [start] + list(ls)
+
+        x = ls[0]
+
+        for i in range(1, len(ls)):
+
+            x = fn(x, ls[i])
+
+        return x
+
+    return my_reduce
+
+        [fn(x, a_storage[i])  for i in range(len(a_storage))]
 
         """
         # TODO: Implement for Task 2.2.

@@ -124,9 +124,9 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
             @staticmethod
             def backward(ctx, grad_output):
 
-                # TODO: Implement for Task 2.3.
-
                 a = ctx.saved_values
+
+                # TODO: Implement for Task 2.3.
 
                 return sigmoid_map(grad_output) * sigmoid_map(a)  # .25 & .365529
 
@@ -182,7 +182,8 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
             def backward(ctx, grad_output):
 
                 # TODO: Implement for Task 2.3.
-                return exp_map(grad_output)
+
+                return grad_output * 0.0
 
         class Sum(Function):
             @staticmethod
