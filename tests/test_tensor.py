@@ -10,29 +10,29 @@ v = 4.524423
 one_arg = [
     # Uncomment for task 2.4
     ("neg", lambda a: -a),
-    # ("addconstant", lambda a: a + v),
-    # ("lt", lambda a: a < v),
-    # ("subconstant", lambda a: a - v),
-    # ("mult", lambda a: 5 * a),
-    # ("div", lambda a: a / v),
-    # ("sig", lambda a: a.sigmoid()),
-    # ("log", lambda a: (a + 100000).log()),
-    # ("relu", lambda a: (a + 2).relu()),
-    # ("exp", lambda a: (a - 200).exp()),
+    ("addconstant", lambda a: a + v),
+    ("lt", lambda a: a < v),
+    ("subconstant", lambda a: a - v),
+    ("mult", lambda a: 5 * a),
+    ("div", lambda a: a / v),
+    ("sig", lambda a: a.sigmoid()),
+    ("log", lambda a: (a + 100000).log()),
+    ("relu", lambda a: (a + 2).relu()),
+    ("exp", lambda a: (a - 200).exp()),
 ]
 
 reduce = [
     # Uncomment for task 2.4
     ("sum", lambda a: a.sum()),
     ("mean", lambda a: a.mean()),
-    # ("sum2", lambda a: a.sum(0)),
-    # ("mean2", lambda a: a.mean(0)),
+    ("sum2", lambda a: a.sum(0)),
+    ("mean2", lambda a: a.mean(0)),
 ]
 two_arg = [
     # Uncomment for task 2.4
     ("add", lambda a, b: a + b),
     ("mul", lambda a, b: a * b),
-    # ("lt", lambda a, b: a < b + v),
+    ("lt", lambda a, b: a < b + v),
 ]
 
 
@@ -113,7 +113,7 @@ def test_reduce_forward_one_dim():
     # shape (3, 2)
     t = minitorch.tensor_fromlist([[2, 3], [4, 6], [5, 7]])
 
-    # here 0 means to reduce the 0th dim, 3 -> 1 
+    # here 0 means to reduce the 0th dim, 3 -> 1
     t_summed = t.sum(0)
 
     # shape (1, 2)
@@ -128,7 +128,7 @@ def test_reduce_forward_one_dim_2():
     # shape (3, 2)
     t = minitorch.tensor_fromlist([[2, 3], [4, 6], [5, 7]])
 
-    # here 1 means reduce the 1st dim, 2 -> 1 
+    # here 1 means reduce the 1st dim, 2 -> 1
     t_summed_2 = t.sum(1)
 
     # shape (3, 1)
