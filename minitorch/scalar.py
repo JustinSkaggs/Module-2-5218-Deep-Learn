@@ -332,14 +332,14 @@ class Exp(ScalarFunction):
 
         # TODO: Implement for Task 1.2.
         ctx.save_for_backward(a)
-        operators.exp(a)
+        return operators.exp(a)
 
     @staticmethod
     def backward(ctx, d_output):
 
         # TODO: Implement for Task 1.4.
 
-        operators.exp(d_output)
+        return operators.exp(d_output)
 
 
 def derivative_check(f, *scalars):
