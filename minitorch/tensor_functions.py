@@ -183,7 +183,7 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 # TODO: Implement for Task 2.3.
 
-                return grad_output * 0.0
+                return grad_output * exp_map(a)
 
         class Sum(Function):
             @staticmethod
