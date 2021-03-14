@@ -1,11 +1,10 @@
-import numpy as np
-import minitorch
 from .tensor_data import (
     count,
     index_to_position,
     broadcast_index,
     shape_broadcast,
     # MAX_DIMS,
+    # TensorData
 )
 
 
@@ -27,32 +26,25 @@ def tensor_map(fn):
 
     Returns:
         None : Fills in `out`
-
     """
 
     def _map(out, out_shape, out_strides, in_storage, in_shape, in_strides):
+        if (out_shape == in_shape).all() and len(out_shape) == len(in_shape):
+            for i, tmp in enumerate(in_storage):
+                out[i] = fn(tmp)
+        elif (out_shape == shape_broadcast(out_shape, in_shape)).all():
+            out_index = [0] * len(out_shape)
+            position = 0
+            for i, tmp in enumerate(out):
+                count(position, out_shape, out_index)
 
-        # TODO: Implement for Task 2.2.
-
-        if all(out_shape == in_shape):
-
-            for idx, val in enumerate(in_storage):
-                out[idx] = fn(val)
-        else:
-
-            for i in range(len(out)):
-
-                index = [0] * len(out_shape)
-                count(i, out_shape, index)
-
-                # Broadcast tensor in_shape
                 in_index = [0] * len(in_shape)
-                broadcast_index(index, out_shape, in_shape, in_index)
+                broadcast_index(out_index, out_shape, in_shape, in_index)
+                out[i] = fn(in_storage[index_to_position(in_index, in_strides)])
 
-                in_pos = index_to_position(in_index, in_strides)
-
-                out[i] = fn(in_storage[in_pos])
-
+                position = 1
+        else:
+            raise NotImplementedError('Not implemented map operator between these shapes')
     return _map
 
 
@@ -120,34 +112,42 @@ def tensor_zip(fn):
         b_shape,
         b_strides,
     ):
-        # TODO: Implement for Task 2.2.
+        if isinstance((a_shape == b_shape), bool):
+            if a_shape == b_shape:
+                for i, tmp in enumerate(out):
+                    out[i] = fn(a_storage[i], b_storage[i])
+            else:
+                tmp_out = [0] * len(out_shape)
+                position = 0
+                for i, tmp in enumerate(out):
+                    count(position, out_shape, tmp_out)
 
-        out_a = []
-        out_b = []
+                    a_out = [0] * len(a_shape)
+                    broadcast_index(tmp_out, out_shape, a_shape, a_out)
+                    b_out = [0] * len(b_shape)
+                    broadcast_index(tmp_out, out_shape, b_shape, b_out)
+                    a_position = index_to_position(a_out, a_strides)
+                    b_position = index_to_position(b_out, b_strides)
+                    out[i] = fn(a_storage[a_position], b_storage[b_position])
 
-        for i in range(len(out)):
+                    position = 1
+        elif (a_shape == b_shape).all() and len(a_shape) == len(b_shape):
+            for i, tmp in enumerate(out):
+                out[i] = fn(a_storage[i], b_storage[i])
+        else:
+            tmp_out = [0] * len(out_shape)
+            position = 0
+            for i, tmp in enumerate(out):
+                count(position, out_shape, tmp_out)
 
-            # Use count(…) to go from i to index according to out_shape
-            index = [0] * len(out_shape)
-            count(i, out_shape, index)
-
-            # Broadcast tensor a
-            a_index = [0] * len(a_shape)
-            broadcast_index(index, out_shape, a_shape, a_index)
-            a_pos = index_to_position(a_index, a_strides)
-            out_a.append(a_storage[a_pos])
-
-            # Broadcast tensor b
-            b_index = [0] * len(b_shape)
-            broadcast_index(index, out_shape, b_shape, b_index)
-            b_pos = index_to_position(b_index, b_strides)
-            out_b.append(b_storage[b_pos])
-
-        out_storage = [fn(out_a[j], out_b[j]) for j in range(len(out_a))]
-
-        for idx, val in enumerate(out_storage):
-            out[idx] = val
-
+                a_out = [0] * len(a_shape)
+                broadcast_index(tmp_out, out_shape, a_shape, a_out)
+                b_out = [0] * len(b_shape)
+                broadcast_index(tmp_out, out_shape, b_shape, b_out)
+                a_position = index_to_position(a_out, a_strides)
+                b_position = index_to_position(b_out, b_strides)
+                out[i] = fn(a_storage[a_position], b_storage[b_position])
+                position = 1
     return _zip
 
 
@@ -201,7 +201,6 @@ def tensor_reduce(fn):
 
     Returns:
         None : Fills in `out`
-
     """
 
     def _reduce(
@@ -214,61 +213,25 @@ def tensor_reduce(fn):
         reduce_shape,
         reduce_size,
     ):
-        """
-            # Broadcast tensor in_shape
-            in_index = [0] * len(in_shape)
-            broadcast_index(index, out_shape, in_shape, in_index)
-
-            in_pos = index_to_position(in_index, in_strides)
-
-            out[i] = fn(in_storage[in_pos])
-
-
-                def my_reduce(ls):
-
-        ls = [start] + list(ls)
-
-        x = ls[0]
-
-        for i in range(1, len(ls)):
-
-            x = fn(x, ls[i])
-
-        return x
-
-    return my_reduce
-
-        [fn(x, a_storage[i])  for i in range(len(a_storage))]
-
-        """
-        # TODO: Implement for Task 2.2.
-
         if len(out) == 1:
-
-            out[0] = minitorch.operators.reduce(fn, 0.0)(a_storage)
-
-        else:
-
+            for tmp in a_storage:
+                out[0] = fn(tmp, out[0])
+        elif len(out) <= len(a_storage):
             for i in range(len(out)):
-
-                out_storage = []
-
+                index = [0] * len(out_shape)
+                count(i, out_shape, index)
+                r_index = [0] * len(reduce_shape)
+                position = 0
                 for j in range(reduce_size):
-
-                    out_index = list(np.zeros(len(out_shape)))
-                    count(i, out_shape, out_index)
-
-                    reduce_index = list(np.zeros(len(reduce_shape)))
-                    count(j, reduce_shape, reduce_index)
-
-                    for idx, val in enumerate(reduce_index):
-                        out_index[idx] += val
-
-                    idx_to_pos = index_to_position(out_index, a_strides)
-                    out_storage.append(a_storage[idx_to_pos])
-
-                out[i] = minitorch.operators.reduce(fn, 0.0)(list(out_storage))
-
+                    count(position, reduce_shape, r_index)
+                    for h, k in enumerate(r_index):
+                        index[h] += k
+                    out[i] = fn(out[i], a_storage[index_to_position(index, a_strides)])
+                    for h, k in enumerate(r_index):
+                        index[h] -= k
+                    position = 1
+        else:
+            raise NotImplementedError('Not implemented reducing to a bigger set se Tensor->expand(),  chose to use map')
     return _reduce
 
 
@@ -325,6 +288,7 @@ def reduce(fn, start=0.0):
 
         if old_shape is not None:
             out = out.view(*old_shape)
+            # print(out.tuple())
         return out
 
     return ret

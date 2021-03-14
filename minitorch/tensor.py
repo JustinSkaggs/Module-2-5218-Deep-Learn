@@ -179,6 +179,19 @@ class Tensor(Variable):
         out._type_(self.backend)
         return out
 
+    def ones(self, shape=None):
+        def one(shape):
+            return Tensor.make(
+                [1] * int(operators.prod(shape)), shape, backend=self.backend
+            )
+
+        if shape is None:
+            out = one(self.shape)
+        else:
+            out = one(shape)
+        out._type_(self.backend)
+        return out
+
     def tuple(self):
         return self._tensor.tuple()
 

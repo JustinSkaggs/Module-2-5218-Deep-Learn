@@ -1,8 +1,7 @@
 import random
-from .operators import prod
+from .operators import prod, max
 from numpy import array, float64, ndarray
 import numba
-import numpy as np
 
 MAX_DIMS = 32
 
@@ -25,15 +24,13 @@ def index_to_position(index, strides):
         int : position in storage
     """
 
-    # TODO: Implement for Task 2.1.
+    if(len(index) != len(strides)):
+        raise IndexingError
 
-    position_in_storage = 0
-
-    for i, val in enumerate(index):
-
-        position_in_storage += strides[i] * val
-
-    return position_in_storage
+    ret = 0
+    for i in range(len(index)):
+        ret += index[i] * strides[i]
+    return ret
 
 
 def count(position, shape, out_index):
@@ -51,18 +48,23 @@ def count(position, shape, out_index):
     Returns:
       None : Fills in `out_index`.
 
-       """
+    """
+    m = [2]
+    m.extend(shape)
 
-    # TODO: Implement for Task 2.1.
-
-    # Provided by class Lecture
-    ##################################################
-    strides = strides_from_shape(shape)
-    for index, stride in enumerate(strides):
-        new_elem = position // stride
-        position = position - (new_elem * stride)
-        out_index[index] = new_elem
-    ##################################################
+    while True:
+        if position == 0:
+            break
+        else:
+            j = len(shape)
+            while out_index[j - 1] == m[j] - 1:
+                out_index[j - 1] = 0
+                j -= 1
+            if j == 0:
+                break
+            else:
+                out_index[j - 1] += 1
+                position -= 1
 
 
 def broadcast_index(big_index, big_shape, shape, out_index):
@@ -82,19 +84,13 @@ def broadcast_index(big_index, big_shape, shape, out_index):
     Returns:
         None : Fills in `out_index`.
     """
-    # TODO: Implement for Task 2.4.
-
-    index_offset = len(big_shape) - len(shape)
-
-    for i in range(len(shape)):
-
-        if shape[i] > 1:
-
-            out_index[i] = big_index[i + index_offset]
-
-        else:
-
+    j = len(big_shape) - 1
+    for i in range(len(shape) - 1, -1, -1):
+        if shape[i] != 1:
+            out_index[i] = big_index[j]
+        elif shape[i] == 1:
             out_index[i] = 0
+        j -= 1
 
 
 def shape_broadcast(shape1, shape2):
@@ -111,22 +107,25 @@ def shape_broadcast(shape1, shape2):
     Raises:
         IndexingError : if cannot broadcast
     """
-
-    # TODO: Implement for Task 2.4.
-
-    a = list(np.zeros(shape1).shape)
-    b = list(np.zeros(shape2).shape)
-
-    if all((m == n) or (m == 1) or (n == 1) for m, n in zip(a[::-1], b[::-1])):
-        if len(a) < len(b):
-            a = list([1] * (len(b) - len(a))) + a
-        else:
-            b = list([1] * (len(a) - len(b))) + b
-
-        return tuple([max(m, n) for m, n in zip(a[::1], b[::1])])
+    ret = [0]
+    max_length = max(len(shape1), len(shape2))
+    if len(shape1) == max_length:
+        shape = shape1
     else:
+        shape = shape2
+    shape_diff = max(max_length - len(shape1), max_length - len(shape2))
 
-        raise IndexingError("Cannot Broadcast")
+    for i in range(-1, -1 * max_length - 1 + shape_diff, -1):
+        if shape1[i] == shape2[i] or shape1[i] == 1 or shape2[i] == 1:
+            ret.insert(0, max(shape1[i], shape2[i]))
+        else:
+            # return []
+            raise IndexingError("Incompatible broadcast")
+    for i in range(-1 * max_length - 1 + shape_diff, -1 * max_length - 1, -1):
+        ret.insert(0, shape[i])
+
+    ret = tuple(*[ret[0:-1]])
+    return ret
 
 
 def strides_from_shape(shape):
@@ -202,10 +201,13 @@ class TensorData:
 
     def indices(self):
         lshape = array(self.shape)
-        out_index = array(self.shape)
+        out_index = [0] * len(lshape)
+        position = 0
         for i in range(self.size):
-            count(i, lshape, out_index)
+            # out_index = [0] * len(lshape)
+            count(position, lshape, out_index)
             yield tuple(out_index)
+            position = 1
 
     def sample(self):
         return tuple((random.randint(0, s - 1) for s in self.shape))
@@ -232,18 +234,12 @@ class TensorData:
         assert list(sorted(order)) == list(
             range(len(self.shape))
         ), f"Must give a position to each dimension. Shape: {self.shape} Order: {order}"
-
-        # TODO: Implement for Task 2.1.
-
-        new_shape = []
-        new_stride = []
-        for ind in order:
-            new_shape.append(self.shape[ind])
-            new_stride.append(self.strides[ind])
-
-        new_TensorData = TensorData(tuple(self._storage), tuple(new_shape), tuple(new_stride))
-
-        return new_TensorData
+        s = [None] * len(self.shape)
+        t = [None] * len(self.strides)
+        for i, tmp in enumerate(order):
+            s[i] = self.shape[tmp]
+            t[i] = self.strides[tmp]
+        return TensorData(self._storage, tuple(s), tuple(t))
 
     def to_string(self):
         s = ""

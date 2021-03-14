@@ -203,8 +203,6 @@ def zipWith(fn):
 
     def my_zip(x, y):
 
-        print(x, y)
-
         new_list = [fn(x[i], y[i]) for i in range(len(x))]
 
         return new_list

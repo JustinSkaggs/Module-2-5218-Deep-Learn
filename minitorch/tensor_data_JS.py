@@ -55,14 +55,17 @@ def count(position, shape, out_index):
 
     # TODO: Implement for Task 2.1.
 
-    # Provided by class Lecture
-    ##################################################
     strides = strides_from_shape(shape)
-    for index, stride in enumerate(strides):
-        new_elem = position // stride
-        position = position - (new_elem * stride)
-        out_index[index] = new_elem
-    ##################################################
+
+    from itertools import combinations, product
+
+    indices_list = [list(range(i)) for i in shape]
+
+    for indices in combinations([*indices_list], len(shape)):
+        for index in product(*indices):
+            if position == index_to_position(index, strides):
+                for i, val in enumerate(index):
+                    out_index[i] = val
 
 
 def broadcast_index(big_index, big_shape, shape, out_index):

@@ -109,7 +109,7 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 a, b = ctx.saved_values
 
-                return b * grad_output, a * grad_output
+                return grad_output * b, grad_output * a
 
         class Sigmoid(Function):
             @staticmethod
@@ -124,11 +124,15 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
             @staticmethod
             def backward(ctx, grad_output):
 
-                a = ctx.saved_values
-
                 # TODO: Implement for Task 2.3.
 
-                return sigmoid_map(grad_output) * sigmoid_map(a)  # .25 & .365529
+                a = ctx.saved_values
+
+                one = a.ones(a.shape)
+
+                f_prime = sigmoid_map(a) * (one - sigmoid_map(a))
+
+                return f_prime * grad_output
 
         class ReLU(Function):
             @staticmethod
@@ -183,6 +187,8 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 # TODO: Implement for Task 2.3.
 
+                a = ctx.saved_values
+
                 return grad_output * exp_map(a)
 
         class Sum(Function):
@@ -212,32 +218,21 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
 
                 # TODO: Implement for Task 2.2.
 
-                ######################################################
                 if dim is not None:
-                    ctx.save_for_backward(a.shape[dim], a.shape, dim)
-                    return mul_zip(add_reduce(a, [dim]), inv_map(tensor([a.shape[dim]])))
+                    ctx.save_for_backward(a.shape[dim])
+                    return add_reduce(a, [dim]) / a.shape[dim]
                 else:
-                    ctx.save_for_backward(a.size, a.shape, dim)
-                    return mul_zip(add_reduce(a, list(range(a.dims))).view(1), inv_map(tensor([a.size])))
-
-                ######################################################
+                    ctx.save_for_backward(a.size)
+                    return add_reduce(a, list(range(a.dims))).view(1) / a.size
 
             @staticmethod
             def backward(ctx, grad_output):
 
                 # TODO: Implement for Task 2.3.
 
-                ######################################################
-                a_size, a_shape, dim = ctx.saved_values
-                # START Code Update
-                if dim is None:
-                    out = grad_output.zeros(a_shape)
-                    out._tensor._storage[:] = grad_output[0] / a_size
-                    return out
-                else:
-                    return grad_output / a_shape[dim]
-                # END Code Update
-                ######################################################
+                a = ctx.saved_values
+
+                return grad_output / a
 
         class LT(Function):
             @staticmethod
@@ -281,25 +276,17 @@ def make_tensor_backend(tensor_ops, is_cuda=False):
         class Permute(Function):
             @staticmethod
             def forward(ctx, a, order):
-                ###################################
+
                 # TODO: Implement for Task 2.2.
 
                 ctx.save_for_backward(a, order)
-
-                a._tensor = a._tensor.permute(order)
-
-                return a._tensor.permute(order)
-                ################################
 
             @staticmethod
             def backward(ctx, grad_output):
 
                 # TODO: Implement for Task 2.3.
-                ###################################
-                a, order = ctx.saved_values
 
-                return grad_output * a._tensor.permute(order)
-                ###################################
+                a, order = ctx.saved_values
 
         class View(Function):
             @staticmethod
