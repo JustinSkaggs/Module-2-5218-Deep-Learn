@@ -3,7 +3,9 @@ pyproject.toml
 setup.py
 minitorch/__init__.py
 minitorch/autodiff.py
+minitorch/module.py
 minitorch/operators.py
+minitorch/scalar.py
 minitorch/tensor.py
 minitorch/tensor_data.py
 minitorch/tensor_functions.py
