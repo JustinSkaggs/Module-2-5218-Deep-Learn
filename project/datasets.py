@@ -37,18 +37,18 @@ class Graph:
         ax = fig.gca()
         ax.set_xticks([])
         ax.set_yticks([])
-        cmap = plt.cm.get_cmap("RdBu")
+        cmap = plt.cm.get_cmap('BuGn_r')  # '"#137e6d")
         if model is not None:
             X = []
             Y = []
             Z = []
-            for i in range(51):
+            for i in range(11):
                 inner = []
                 innerx = []
                 innery = []
-                for j in range(51):
-                    x_1 = i / 50.0
-                    x_2 = j / 50.0
+                for j in range(11):
+                    x_1 = i / 10.0
+                    x_2 = j / 10.0
                     innerx.append(x_1)
                     innery.append(x_2)
                     val = model([x_1, x_2])

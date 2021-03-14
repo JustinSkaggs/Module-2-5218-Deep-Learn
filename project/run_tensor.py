@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 PTS = 50
 DATASET = datasets.Xor(PTS, vis=True)
-HIDDEN = 10
+HIDDEN = 3
 RATE = 0.5
 
 
@@ -24,8 +24,11 @@ class Network(minitorch.Module):
         self.layer3 = Linear(HIDDEN, 1)
 
     def forward(self, x):
+
         # TODO: Implement for Task 2.5.
-        raise NotImplementedError('Need to implement for Task 2.5')
+        h = self.layer1.forward(x).relu()
+        h = self.layer2.forward(h).relu()
+        return self.layer3.forward(h).sigmoid()
 
 
 class Linear(minitorch.Module):
@@ -36,8 +39,21 @@ class Linear(minitorch.Module):
         self.out_size = out_size
 
     def forward(self, x):
+
         # TODO: Implement for Task 2.5.
-        raise NotImplementedError('Need to implement for Task 2.5')
+
+        bias = self.bias.value
+        weights = self.weights.value
+
+        x = x.view(*(list(x.shape) + [1]))
+
+        y = bias + x * weights
+
+        y = y.sum(1)
+
+        y = y.view(x.shape[0], bias.size)
+
+        return y
 
 
 model = Network()
@@ -47,7 +63,7 @@ X = minitorch.tensor_fromlist(data.X)
 y = minitorch.tensor(data.y)
 
 losses = []
-for epoch in range(250):
+for epoch in range(1000):
     total_loss = 0.0
     correct = 0
     start = time.time()
